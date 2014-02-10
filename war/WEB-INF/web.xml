@@ -4,5 +4,31 @@ xmlns="http://java.sun.com/xml/ns/javaee"
 xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
 xsi:schemaLocation="http://java.sun.com/xml/ns/javaee
 http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
-  
+  	<servlet>
+		<servlet-name>Start</servlet-name>
+		<servlet-class>isjuku.reversi.StartServlet</servlet-class>
+	</servlet>
+	<servlet>
+		<servlet-name>Get</servlet-name>
+		<servlet-class>isjuku.reversi.GetServlet</servlet-class>
+	</servlet>
+	<servlet>
+		<servlet-name>Put</servlet-name>
+		<servlet-class>isjuku.reversi.PutServlet</servlet-class>
+	</servlet>	
+	<servlet-mapping>
+		<servlet-name>Start</servlet-name>
+		<url-pattern>/s</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>Get</servlet-name>
+		<url-pattern>/g</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>Put</servlet-name>
+		<url-pattern>/p</url-pattern>
+	</servlet-mapping>
+	<welcome-file-list>
+		<welcome-file>index.html</welcome-file>
+	</welcome-file-list>
 </web-app>

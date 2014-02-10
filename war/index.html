@@ -1,0 +1,28 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script type="text/javascript">
+$(function(){
+
+  var canvas = $('#canvas')[0];
+  var context = canvas.getContext('2d');
+  context.fillStyle = '#888888';
+  context.fillRect(0, 0, 480, 480);
+  $('#message').html('load');
+   
+  $('#canvas').mousedown(function(ev){
+    var rect = ev.target.getBoundingClientRect();
+    var mouseX = ev.clientX - rect.left;
+    var mouseY = ev.clientY - rect.top;
+  	$('#message').html(mouseX + ' ' + mouseY);
+  });
+  
+});
+</script>
+</head>
+<body>
+<canvas id="canvas" width="480" height="480"></canvas>
+<div id="message"></div>
+</body>
+</html>
