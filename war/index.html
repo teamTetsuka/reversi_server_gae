@@ -3,26 +3,234 @@
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
 <script type="text/javascript">
-$(function(){
 
-  var canvas = $('#canvas')[0];
-  var context = canvas.getContext('2d');
-  context.fillStyle = '#888888';
-  context.fillRect(0, 0, 480, 480);
-  $('#message').html('load');
-   
+const COLS = 8;
+const ROWS = 8;
+
+const GRID_SIZE = 60;
+const STONE_RADIUS = 20;
+
+const STONE_TYPE = {
+  NONE: 0,
+  BLACK: 1,
+  WHITE: 2
+};
+
+var canvas;
+var context;
+
+var scene;
+var player;
+var currentPlayer;
+var boardMap;
+var sessionId;
+var turnCount;
+
+$(function(){
+  
+  canvas = $('#canvas')[0];
+  context = canvas.getContext('2d');
+  
+  $.ajaxSetup({async:false});
+  $.getJSON('s', function(data){
+    sessionId = data.id;
+    player = data.p;
+    switch(player){
+    case STONE_TYPE.BLACK:
+      scene = 'wait_start';
+      break;
+    case STONE_TYPE.WHITE:
+      scene = 'wait';
+      break;
+    }
+  });
+  $.ajaxSetup({async:true});
+  
+  turnCount = 0;
+  currentPlayer = STONE_TYPE.BLACK;
+  
+  initBoard();
+  drawBoard();
+  setTimeout(poll, 1000);
+  
   $('#canvas').mousedown(function(ev){
-    var rect = ev.target.getBoundingClientRect();
-    var mouseX = ev.clientX - rect.left;
-    var mouseY = ev.clientY - rect.top;
-  	$('#message').html(mouseX + ' ' + mouseY);
+    if (scene == 'operation'){
+      var rect = ev.target.getBoundingClientRect();
+      var pos = {col:~~((ev.clientX - rect.left) / GRID_SIZE),
+                 row:~~((ev.clientY - rect.top) / GRID_SIZE)};
+      if (putStone(pos)){
+        $.getJSON('p', {id:sessionId,p:currentPlayer,c:pos.col,r:pos.row}, function(data){
+          scene = 'wait';
+          currentPlayer = getOpponent(currentPlayer);
+          drawBoard();
+        });
+      }
+    }
   });
   
 });
+
+function initBoard(){
+  boardMap = new Array(COLS);
+  for(var i = 0;i < COLS;i++){
+    var r = new Array(ROWS);
+    for(var j = 0;j < ROWS;j++){
+      r[j] = STONE_TYPE.NONE;
+    }
+    boardMap[i] = r;
+  }
+  boardMap[COLS / 2 - 1][ROWS / 2 - 1] = STONE_TYPE.BLACK;
+  boardMap[COLS / 2][ROWS / 2] = STONE_TYPE.BLACK;
+  boardMap[COLS / 2 - 1][ROWS / 2] = STONE_TYPE.WHITE;
+  boardMap[COLS / 2][ROWS / 2 - 1] = STONE_TYPE.WHITE;
+}
+
+function drawBoard(){
+  context.clearRect(0, 0, COLS * GRID_SIZE, ROWS * GRID_SIZE);
+  context.strokeStyle = "#008800";
+  for(var r = 0;r <= ROWS;r++){
+    var y = r * GRID_SIZE;
+    context.beginPath();
+    context.moveTo(0, y)
+    context.lineTo(GRID_SIZE * COLS, y);
+    context.stroke();
+  }
+  for(var c = 0;c <= COLS;c++){
+    var x = c * GRID_SIZE;
+    context.beginPath();
+    context.moveTo(x, 0)
+    context.lineTo(x, GRID_SIZE * ROWS);
+    context.stroke();
+  }
+  for(var r = 0;r < ROWS;r++){
+    for(var c = 0;c < COLS;c++){
+      switch(boardMap[c][r]){
+      case STONE_TYPE.BLACK:
+          context.beginPath();
+          context.arc(
+            c * GRID_SIZE + GRID_SIZE / 2,
+            r * GRID_SIZE + GRID_SIZE / 2,
+            STONE_RADIUS, 0, 2 * Math.PI, true);
+          context.fillStyle = "#000000";
+          context.strokeStyle = "#000000";
+          context.fill();
+          context.stroke();
+          break;
+      case STONE_TYPE.WHITE:
+          context.beginPath();
+          context.arc(
+            c * GRID_SIZE + GRID_SIZE / 2,
+            r * GRID_SIZE + GRID_SIZE / 2,
+            STONE_RADIUS, 0, 2 * Math.PI, true);
+          context.fillStyle = "#ffffff";
+          context.strokeStyle = "#000000";
+          context.fill();
+          context.stroke();
+          break;
+      }
+    }
+  }
+  var t = '';
+  if (player == currentPlayer){
+    t = '*';
+  }
+  if (currentPlayer == STONE_TYPE.BLACK){
+    t += 'black';
+  }else if (currentPlayer == STONE_TYPE.WHITE){
+    t += 'white';
+  }
+  $('#message').html(t);
+}
+
+function putStone(pos){
+  var ret = false;
+  ret = reverseStone(pos, {row:-1, col:-1}) || ret;
+  ret = reverseStone(pos, {row:-1, col:0}) || ret;
+  ret = reverseStone(pos, {row:-1, col:1}) || ret;
+  ret = reverseStone(pos, {row:0, col:-1}) || ret;
+  ret = reverseStone(pos, {row:0, col:1}) || ret;
+  ret = reverseStone(pos, {row:1, col:-1}) || ret;
+  ret = reverseStone(pos, {row:1, col:0}) || ret;
+  ret = reverseStone(pos, {row:1, col:1}) || ret;
+  if (ret){
+    boardMap[pos.col][pos.row] = currentPlayer;
+  }
+  return ret;
+}
+
+function reverseStone(pos, dif){
+  var c = 0;
+  var _pos = pos;
+  var opponent = getOpponent(currentPlayer);
+  while(true){
+    _pos = {row:_pos.row + dif.row,
+        col:_pos.col + dif.col};
+    if (_pos.row < 0 || _pos.row >= ROWS ||
+        _pos.col < 0 || _pos.col >= COLS){
+      return false;
+    }
+    var t = boardMap[_pos.col][_pos.row];
+    if (t == opponent){
+      c++;
+    }else if (t == currentPlayer){
+      break;
+    }else{
+      return false;
+    }
+  }
+  if (c == 0) return false;
+  _pos = pos;
+  while(c > 0){
+    _pos = {row:_pos.row + dif.row,
+            col:_pos.col + dif.col};
+    boardMap[_pos.col][_pos.row] = currentPlayer;
+    c--;
+  }
+  return true;
+}
+
+function getOpponent(player){
+  switch(player){
+  case STONE_TYPE.BLACK:
+    return STONE_TYPE.WHITE;
+    break;
+  case STONE_TYPE.WHITE:
+    return STONE_TYPE.BLACK;
+    break;
+  default:
+    return STONE_TYPE.NONE;
+    break;
+  }
+}
+
+function poll(){
+  $.getJSON('g', {id:sessionId}, function(data){
+    $('#recv').html(scene + ' ' + sessionId + ' ' + player + ' ' + data.t + ' ' + data.p + ' ' + data.c + ' ' + data.r);
+    switch(scene){
+    case 'wait_start':
+      if (data.t == 0){
+        scene = 'operation';
+      }
+      break;
+    case 'wait':
+      if (data.t > turnCount && currentPlayer == data.p){
+        turnCount = data.t;
+        putStone({row:data.r,col:data.c});
+        scene = 'operation';
+        currentPlayer = getOpponent(currentPlayer);
+        drawBoard();
+      }
+      break;
+    }
+    setTimeout(poll, 1000);
+  });
+}
+
 </script>
 </head>
 <body>
 <canvas id="canvas" width="480" height="480"></canvas>
 <div id="message"></div>
+<div id="recv"></div>
 </body>
 </html>
