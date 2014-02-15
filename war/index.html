@@ -24,7 +24,7 @@ var player;
 var currentPlayer;
 var boardMap;
 var sessionId;
-var turnCount;
+var serialNo;
 
 $(function(){
   
@@ -46,7 +46,7 @@ $(function(){
   });
   $.ajaxSetup({async:true});
   
-  turnCount = 0;
+  serialNo = 0;
   currentPlayer = STONE_TYPE.BLACK;
   
   initBoard();
@@ -59,7 +59,9 @@ $(function(){
       var pos = {col:~~((ev.clientX - rect.left) / GRID_SIZE),
                  row:~~((ev.clientY - rect.top) / GRID_SIZE)};
       if (putStone(pos)){
+        scene = null;
         $.getJSON('p', {id:sessionId,p:currentPlayer,c:pos.col,r:pos.row}, function(data){
+          serialNo = data.n;
           scene = 'wait';
           currentPlayer = getOpponent(currentPlayer);
           drawBoard();
@@ -205,16 +207,17 @@ function getOpponent(player){
 
 function poll(){
   $.getJSON('g', {id:sessionId}, function(data){
-    $('#recv').html(scene + ' ' + sessionId + ' ' + player + ' ' + data.t + ' ' + data.p + ' ' + data.c + ' ' + data.r);
+    $('#recv').html(scene + ' ' + sessionId + ' ' + player + ' ' + data.n + ' ' + data.p + ' ' + data.c + ' ' + data.r);
     switch(scene){
     case 'wait_start':
-      if (data.t == 0){
+      if (data.n > serialNo){
+        serialNo = data.n;
         scene = 'operation';
       }
       break;
     case 'wait':
-      if (data.t > turnCount && currentPlayer == data.p){
-        turnCount = data.t;
+      if (data.n > serialNo && currentPlayer == data.p){
+        serialNo = data.n;
         putStone({row:data.r,col:data.c});
         scene = 'operation';
         currentPlayer = getOpponent(currentPlayer);

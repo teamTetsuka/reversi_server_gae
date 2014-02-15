@@ -26,13 +26,13 @@ public class PutServlet extends HttpServlet {
 		try{
 			Key k = KeyFactory.createKey("r", Long.parseLong(req.getParameter("id")));
 			Entity e = ds.get(k);
-			long t = (Long)e.getProperty("t");
-			e.setProperty("t", t + 1);
+			long n = (Long)e.getProperty("n") + 1;
+			e.setProperty("n", n);
 			e.setProperty("p", req.getParameter("p"));
 			e.setProperty("r", req.getParameter("r"));
 			e.setProperty("c", req.getParameter("c"));
 			ds.put(e);
-			ret = "{}";
+			ret = "{\"n\":" + n + "}";
 		}catch(Exception e){
 			ret = "{\"error\":true}";
 		}

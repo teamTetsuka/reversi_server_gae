@@ -26,7 +26,7 @@ public class GetServlet extends HttpServlet {
 		try{
 			Key k = KeyFactory.createKey("r", Long.parseLong(req.getParameter("id")));
 			Entity e = ds.get(k);
-			ret = "{\"t\":" + e.getProperty("t");
+			ret = "{\"n\":" + e.getProperty("n");
 			if (e.hasProperty("p")){
 				ret += ",\"p\":" + e.getProperty("p");
 			}

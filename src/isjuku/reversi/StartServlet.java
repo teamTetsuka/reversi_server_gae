@@ -24,7 +24,7 @@ public class StartServlet extends HttpServlet {
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
 		Query q = new Query("r");
-		q.setFilter(FilterOperator.EQUAL.of("t", -1));
+		q.setFilter(FilterOperator.EQUAL.of("n", 0));
 		PreparedQuery pq = ds.prepare(q);
 		Entity e = null;
 		String ret;
@@ -34,11 +34,11 @@ public class StartServlet extends HttpServlet {
 		}
 		if (e == null){
 			e = new Entity("r");
-			e.setProperty("t", -1);
+			e.setProperty("n", 0);
 			ds.put(e);
 			ret = "{\"id\":\"" + e.getKey().getId() + "\"" + ",\"p\":1}";
 		}else{
-			e.setProperty("t", 0);
+			e.setProperty("n", 1);
 			ds.put(e);
 			ret = "{\"id\":\"" + e.getKey().getId() + "\"" + ",\"p\":2}";
 		}
